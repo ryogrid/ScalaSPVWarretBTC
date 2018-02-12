@@ -140,10 +140,10 @@ class MessageHandler(dummy:String) {
    // ret.userAgent = new Array[Byte]{byteToLittleNosin(0)}
     ret.payloadSize = intToLittleNosin(msg.bytes)
     var hash:Array[Byte] = hash256(data)
-    ret.checksum(0) = byteToLittleNosin(hash(0))
-    ret.checksum(1) = byteToLittleNosin(hash(1))
-    ret.checksum(2) = byteToLittleNosin(hash(2))
-    ret.checksum(3) = byteToLittleNosin(hash(3))
+    ret.checksum(0) = hash(0)
+    ret.checksum(1) = hash(1)
+    ret.checksum(2) = hash(2)
+    ret.checksum(3) = hash(3)
 
     return ret
   }
@@ -177,25 +177,25 @@ class MessageHandler(dummy:String) {
   }
 
   def write_netaddr(buf:ByteBuffer) {
-    buf.writeLong(longToLittleNosin(1))
+    buf.putLong(longToLittleNosin(1))
     for(ip <- Array(0,0,0,0,0,0,0,0,0,0,255,255,127,0,0,1)){
-      buf.writeByte(ip)
+      buf.put(ip.asInstanceOf[Byte])
     }
-    buf.writeShort(8333)
+    buf.putShort(8333)
   }
 
   def write_version(ver:Version){
     var buf = ByteBuffer.allocate(86)
 
-    buf.writeInt(intToLittleNosin(70015))
-    buf.writeLong(longToLittleNosin(1))
-    buf.writeLong(longToLittleNosin(((System.currentTimeMillis() / 1000L).asInstanceOf[Int])))
+    buf.putInt(intToLittleNosin(70015))
+    buf.putLong(longToLittleNosin(1))
+    buf.putLong(longToLittleNosin(((System.currentTimeMillis() / 1000L).asInstanceOf[Int])))
     write_netaddr(buf)
     write_netaddr(buf)
-    buf.writeLong(longToLittleNosin(0))
-    buf.write(byteToLittleNosin(0))
-    buf.writeInt(intToLittleNosin(0))
-    buf.write(byteToLittleNosin(0))
+    buf.putLong(longToLittleNosin(0))
+    buf.put(byteToLittleNosin(0))
+    buf.putInt(intToLittleNosin(0))
+    buf.put(byteToLittleNosin(0))
 
     var ver_arr = buf.array()
     write_header(create_header(ver, ver_arr))
@@ -214,11 +214,10 @@ class MessageHandler(dummy:String) {
     }
     // ret.userAgent = new Array[Byte]{byteToLittleNosin(0)}
     header.payloadSize = intToLittleNosin(0)
-    var hash:Array[Byte] = hash256(data)
-    header.checksum(0) = byteToLittleNosin(0x5d)
-    header.checksum(1) = byteToLittleNosin(0xf6)
-    header.checksum(2) = byteToLittleNosin(0xe0)
-    header.checksum(3) = byteToLittleNosin(0xe2)
+    header.checksum(0) = shortToLittleNosin(0x5d).asInstanceOf[Byte]
+    header.checksum(1) = shortToLittleNosin(0xf6).asInstanceOf[Byte]
+    header.checksum(2) = shortToLittleNosin(0xe0).asInstanceOf[Byte]
+    header.checksum(3) = shortToLittleNosin(0xe2).asInstanceOf[Byte]
 
     write_header(header)
   }
