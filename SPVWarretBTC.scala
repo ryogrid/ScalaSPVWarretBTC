@@ -47,7 +47,7 @@ class MessageHandler(dummy:String = "dummy") {
     md.digest()
   }
 
-  def hash256(payload: Array[Byte]):Array[Byte] = {
+  def hash256(payload: Array[Byte]): Array[Byte] = {
     sha256(sha256(payload))
   }
 
@@ -83,12 +83,12 @@ class MessageHandler(dummy:String = "dummy") {
     Integer.parseUnsignedInt(String.valueOf(buf.get())).asInstanceOf[Byte]
   }
 
-  def create_header(msg: Version, data: Array[Byte]): MessageHeader = {
+  def createHeader(msg: Version, data: Array[Byte]): MessageHeader = {
     val header = new MessageHeader()
     header.magic = intToLittleNosin(0x0709110B)
-    val cmd_name = "version".toCharArray()
+    val commandName = "version".toCharArray()
     var cnt = 0
-    for (ch <- cmd_name) {
+    for (ch <- commandName) {
       header.commandName(cnt) = ch.asInstanceOf[Byte]
       cnt += 1
     }
@@ -101,36 +101,36 @@ class MessageHandler(dummy:String = "dummy") {
     header
   }
 
-  def read_header(): MessageHeader = {
+  def readHeader(): MessageHeader = {
     val header = new MessageHeader()
     din.readInt()
-    val cmd_name = new Array[Byte](12)
-    din.read(cmd_name, 0, 12)
-    header.commandName = cmd_name
+    val commandName = new Array[Byte](12)
+    din.read(commandName, 0, 12)
+    header.commandName = commandName
     din.read(new Array[Byte](4), 0, 4)
     header
   }
 
-  def read_netaddr(): NetAddr = {
+  def readNetAddr(): NetAddr = {
     new NetAddr
   }
 
-  def read_version(): Version = {
+  def readVersion(): Version = {
     new Version
   }
 
-  def read_verack(): Verack = {
+  def readVerack(): Verack = {
     new Verack
   }
 
-  def write_header(header: MessageHeader): Unit = {
+  def writeHeader(header: MessageHeader): Unit = {
     dout.writeInt(header.magic)
     dout.write(header.commandName, 0, 12)
     dout.writeInt(header.payloadSize)
     dout.write(header.checksum, 0, 4)
   }
 
-  def write_netaddr(buf: ByteBuffer): Unit = {
+  def writeNetAddr(buf: ByteBuffer): Unit = {
     buf.putLong(longToLittleNosin(1))
     for(ip <- Array(0,0,0,0,0,0,0,0,0,0,255,255,127,0,0,1)){
       buf.put(ip.asInstanceOf[Byte])
@@ -138,28 +138,28 @@ class MessageHandler(dummy:String = "dummy") {
     buf.putShort(8333)
   }
 
-  def write_version(ver: Version): Unit = {
+  def writeVersion(ver: Version): Unit = {
     val buf = ByteBuffer.allocate(86)
     buf.putInt(intToLittleNosin(70015))
     buf.putLong(longToLittleNosin(1))
     buf.putLong(longToLittleNosin((System.currentTimeMillis()/1000).asInstanceOf[Long]))
-    write_netaddr(buf)
-    write_netaddr(buf)
+    writeNetAddr(buf)
+    writeNetAddr(buf)
     buf.putLong(longToLittleNosin(0))
     buf.put(byteToLittleNosin(0))
     buf.putInt(intToLittleNosin(0))
     buf.put(byteToLittleNosin(0))
-    val ver_arr = buf.array()
-    write_header(create_header(ver, ver_arr))
-    dout.write(ver_arr, 0, ver_arr.length)
+    val verArr = buf.array()
+    writeHeader(createHeader(ver, verArr))
+    dout.write(verArr, 0, verArr.length)
   }
 
-  def write_verack(): Unit = {
+  def writeVerack(): Unit = {
     val header = new MessageHeader()
     header.magic = intToLittleNosin(0x0709110B)
-    val cmd_name = "verack".toCharArray()
+    val commandName = "verack".toCharArray()
     var cnt = 0
-    for (ch <- cmd_name) {
+    for (ch <- commandName) {
       header.commandName(cnt) = ch.asInstanceOf[Byte]
       cnt += 1
     }
@@ -169,32 +169,32 @@ class MessageHandler(dummy:String = "dummy") {
     header.checksum(2) = shortToLittleNosin(0xe0).asInstanceOf[Byte]
     header.checksum(3) = shortToLittleNosin(0xe2).asInstanceOf[Byte]
 
-    write_header(header)
+    writeHeader(header)
   }
 
   def withBitcoinConnection(): Unit = {
     val ver = new Version()
-    write_version(ver)
+    writeVersion(ver)
     println("send version")
-    var is_version = false
-    var is_verack = false
-    while(is_version == false || is_verack == false){
-      val header = read_header()
-      val cmd_char = new Array[Char](12)
+    var isVersion = false
+    var isVerack = false
+    while((!isVersion) || (!isVerack)){
+      val header = readHeader()
+      val commandCharacters = new Array[Char](12)
       var cnt:Int = 0
       for(ch <- header.commandName){
-        cmd_char(cnt) = ch.asInstanceOf[Char]
+        commandCharacters(cnt) = ch.asInstanceOf[Char]
         cnt += 1
       }
-      val cmd = new String(cmd_char)
+      val cmd = new String(commandCharacters)
       println("recv " + cmd)
       if(cmd == "version") {
-        is_version = true
-        val ver = read_version()
-        write_verack()
+        isVersion = true
+        val ver = readVersion()
+        writeVerack()
       }else if(cmd == "verack"){
-        is_verack = true
-        val vack = read_verack()
+        isVerack = true
+        val vack = readVerack()
       }
     }
   }
@@ -203,7 +203,7 @@ class MessageHandler(dummy:String = "dummy") {
 
 object Main{
   def main(args: Array[String]) {
-    val msg_handler = new MessageHandler()
-    msg_handler.withBitcoinConnection()
+    val messageHandler = new MessageHandler()
+    messageHandler.withBitcoinConnection()
   }
 }
