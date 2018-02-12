@@ -140,10 +140,10 @@ class MessageHandler(dummy:String) {
    // ret.userAgent = new Array[Byte]{byteToLittleNosin(0)}
     ret.payloadSize = intToLittleNosin(msg.bytes)
     var hash:Array[Byte] = hash256(data)
-    ret.checksum(0) = byteToLittleNosin(data(0))
-    ret.checksum(1) = byteToLittleNosin(data(1))
-    ret.checksum(2) = byteToLittleNosin(data(2))
-    ret.checksum(3) = byteToLittleNosin(data(3))
+    ret.checksum(0) = byteToLittleNosin(hash(0))
+    ret.checksum(1) = byteToLittleNosin(hash(1))
+    ret.checksum(2) = byteToLittleNosin(hash(2))
+    ret.checksum(3) = byteToLittleNosin(hash(3))
 
     return ret
   }
@@ -151,7 +151,7 @@ class MessageHandler(dummy:String) {
   def read_header():MessageHeader={
     var ret = new MessageHeader()
 
-    print(ret.commandName)
+ //   print(ret.commandName)
     return ret
   }
 
@@ -170,31 +170,69 @@ class MessageHandler(dummy:String) {
   def write_header(header:MessageHeader){
     print(new String(header.commandName))
 
-
+    dout.writeInt(header.magic)
+    dout.write(header.commandName, 0, 12)
+    dout.writeInt(header.payloadSize)
+    dout.write(header.checksum, 0, 4)
   }
 
-  def write_netaddr(addr:NetAddr) {
-
+  def write_netaddr(buf:ByteBuffer) {
+    buf.writeLong(longToLittleNosin(1))
+    for(ip <- Array(0,0,0,0,0,0,0,0,0,0,255,255,127,0,0,1)){
+      buf.writeByte(ip)
+    }
+    buf.writeShort(8333)
   }
 
   def write_version(ver:Version){
+    var buf = ByteBuffer.allocate(86)
 
-    var data:Array[Byte] = null
-    write_header(create_header(ver, data))
+    buf.writeInt(intToLittleNosin(70015))
+    buf.writeLong(longToLittleNosin(1))
+    buf.writeLong(longToLittleNosin(((System.currentTimeMillis() / 1000L).asInstanceOf[Int])))
+    write_netaddr(buf)
+    write_netaddr(buf)
+    buf.writeLong(longToLittleNosin(0))
+    buf.write(byteToLittleNosin(0))
+    buf.writeInt(intToLittleNosin(0))
+    buf.write(byteToLittleNosin(0))
+
+    var ver_arr = buf.array()
+    write_header(create_header(ver, ver_arr))
+    dout.write(ver_arr, 0, ver_arr.length)
   }
 
   def write_verack(){
-    
+    var header:MessageHeader = new MessageHeader()
+
+    header.magic = intToLittleNosin(0x0709110B)
+    var cmd_name:Array[Char] = "verack".toCharArray()
+    var cnt = 0
+    for (ch <- cmd_name) {
+      header.commandName(cnt) = ch.asInstanceOf[Byte]
+      cnt += 1
+    }
+    // ret.userAgent = new Array[Byte]{byteToLittleNosin(0)}
+    header.payloadSize = intToLittleNosin(0)
+    var hash:Array[Byte] = hash256(data)
+    header.checksum(0) = byteToLittleNosin(0x5d)
+    header.checksum(1) = byteToLittleNosin(0xf6)
+    header.checksum(2) = byteToLittleNosin(0xe0)
+    header.checksum(3) = byteToLittleNosin(0xe2)
+
+    write_header(header)
   }
 
   def withBitcoinConnection(){
     var ver:Version = new Version()
     write_version(ver)
+    println("send version")
     var is_version = false
     var is_verack = false
     while(is_version == false || is_verack == false){
       var header = read_header()
       var cmd = new String(header.commandName)
+      println("recv " + cmd)
       cmd match{
         case "version" =>
           is_version = true
