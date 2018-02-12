@@ -87,10 +87,8 @@ class MessageHandler(dummy:String = "dummy") {
     val header = new MessageHeader()
     header.magic = intToLittleNosin(0x0709110B)
     val commandName = "version".toCharArray()
-    var cnt = 0
-    for (ch <- commandName) {
-      header.commandName(cnt) = ch.asInstanceOf[Byte]
-      cnt += 1
+    for (i <- 0 until commandName.length) {
+      header.commandName(i) = commandName(i).asInstanceOf[Byte]
     }
     header.payloadSize = intToLittleNosin(msg.bytes)
     val hash = hash256(data)
@@ -158,10 +156,8 @@ class MessageHandler(dummy:String = "dummy") {
     val header = new MessageHeader()
     header.magic = intToLittleNosin(0x0709110B)
     val commandName = "verack".toCharArray()
-    var cnt = 0
-    for (ch <- commandName) {
-      header.commandName(cnt) = ch.asInstanceOf[Byte]
-      cnt += 1
+    for (i <- 0 until commandName.length) {
+      header.commandName(i) = commandName(i).asInstanceOf[Byte]
     }
     header.payloadSize = intToLittleNosin(0)
     header.checksum(0) = shortToLittleNosin(0x5d).asInstanceOf[Byte]
@@ -181,10 +177,8 @@ class MessageHandler(dummy:String = "dummy") {
     while((!isVersion) || (!isVerack)){
       val header = readHeader()
       val commandCharacters = new Array[Char](12)
-      var cnt:Int = 0
-      for(ch <- header.commandName){
-        commandCharacters(cnt) = ch.asInstanceOf[Char]
-        cnt += 1
+      for(i <- 0 until header.commandName.length){
+        commandCharacters(i) = header.commandName(i).asInstanceOf[Char]
       }
       val cmd = new String(commandCharacters)
       println("recv " + cmd)
