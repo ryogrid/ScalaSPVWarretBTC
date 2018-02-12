@@ -97,26 +97,26 @@ class MessageHandler(dummy:String) {
 
   def longToLittleNosin(value:Long):Long={
     val buf = ByteBuffer.allocate(8)
-    buf.putLong(value)
+    buf.putLong(java.lang.Long.parseUnsignedLong(String.valueOf(value)))
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return java.lang.Long.parseUnsignedLong(String.valueOf(buf.getLong()))
+    return buf.getLong()
   }
 
   def intToLittleNosin(value:Int):Int={
     val buf = ByteBuffer.allocate(4)
-    buf.putInt(value)
+    buf.putInt(Integer.parseUnsignedInt(String.valueOf(value)))
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return Integer.parseUnsignedInt(String.valueOf(buf.getInt()))
+    return buf.getInt()
   }
 
   def shortToLittleNosin(value:Short):Short={
     val buf = ByteBuffer.allocate(2)
-    buf.putShort(value)
+    buf.putShort(Integer.parseUnsignedInt(String.valueOf(value)).asInstanceOf[Short])
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return Integer.parseUnsignedInt(String.valueOf(buf.getShort())).asInstanceOf[Short]
+    return buf.getShort()
   }
 
   def byteToLittleNosin(value:Byte):Byte={
@@ -151,7 +151,10 @@ class MessageHandler(dummy:String) {
   def read_header():MessageHeader={
     var ret = new MessageHeader()
 
- //   print(ret.commandName)
+    din.readInt()
+    var cmd_name:Array[Byte] = new Array[Byte](12)
+    din.read(cmd_name, 0, 12)
+    din.read(new Array[Byte](4), 0, 4)
     return ret
   }
 
@@ -168,7 +171,7 @@ class MessageHandler(dummy:String) {
   }
 
   def write_header(header:MessageHeader){
-    print(new String(header.commandName))
+//    println(new String(header.commandName))
 
     dout.writeInt(header.magic)
     dout.write(header.commandName, 0, 12)
@@ -189,7 +192,7 @@ class MessageHandler(dummy:String) {
 
     buf.putInt(intToLittleNosin(70015))
     buf.putLong(longToLittleNosin(1))
-    buf.putLong(longToLittleNosin(((System.currentTimeMillis() / 1000L).asInstanceOf[Int])))
+    buf.putLong(longToLittleNosin((System.currentTimeMillis()/1000).asInstanceOf[Long]))
     write_netaddr(buf)
     write_netaddr(buf)
     buf.putLong(longToLittleNosin(0))
@@ -230,7 +233,14 @@ class MessageHandler(dummy:String) {
     var is_verack = false
     while(is_version == false || is_verack == false){
       var header = read_header()
-      var cmd = new String(header.commandName)
+      var cmd_char:Array[Char] = new Array[Char](12)
+      var cnt:Int = 0
+      for(ch <- header.commandName){
+        cmd_char(cnt) = ch.asInstanceOf[Char]
+        cnt += 1
+        println(String.valueOf(ch.asInstanceOf[Byte]))
+      }
+      var cmd = new String(cmd_char)
       println("recv " + cmd)
       cmd match{
         case "version" =>
