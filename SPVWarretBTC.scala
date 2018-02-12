@@ -53,13 +53,11 @@ class MessageHandler(dummy:String = "dummy") {
         e.printStackTrace()
     }
     md.update(payload)
-    var ret:Array[Byte] = md.digest()
-
-    return ret
+    md.digest()
   }
 
   def hash256(payload:Array[Byte]):Array[Byte]={
-    return sha256(sha256(payload))
+    sha256(sha256(payload))
   }
 
 
@@ -68,7 +66,7 @@ class MessageHandler(dummy:String = "dummy") {
     buf.putLong(java.lang.Long.parseUnsignedLong(String.valueOf(value)))
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return buf.getLong()
+    buf.getLong()
   }
 
   def intToLittleNosin(value:Int):Int={
@@ -76,7 +74,7 @@ class MessageHandler(dummy:String = "dummy") {
     buf.putInt(Integer.parseUnsignedInt(String.valueOf(value)))
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return buf.getInt()
+    buf.getInt()
   }
 
   def shortToLittleNosin(value:Short):Short={
@@ -84,7 +82,7 @@ class MessageHandler(dummy:String = "dummy") {
     buf.putShort(Integer.parseUnsignedInt(String.valueOf(value)).asInstanceOf[Short])
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return buf.getShort()
+    buf.getShort()
   }
 
   def byteToLittleNosin(value:Byte):Byte={
@@ -92,7 +90,7 @@ class MessageHandler(dummy:String = "dummy") {
     buf.put(value)
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return Integer.parseUnsignedInt(String.valueOf(buf.get())).asInstanceOf[Byte]
+    Integer.parseUnsignedInt(String.valueOf(buf.get())).asInstanceOf[Byte]
   }
 
   def create_header(msg: Version, data: Array[Byte]): MessageHeader = {
@@ -113,7 +111,7 @@ class MessageHandler(dummy:String = "dummy") {
     ret.checksum(2) = hash(2)
     ret.checksum(3) = hash(3)
 
-    return ret
+    ret
   }
 
   def read_header(): MessageHeader = {
@@ -124,19 +122,19 @@ class MessageHandler(dummy:String = "dummy") {
     din.read(cmd_name, 0, 12)
     ret.commandName = cmd_name
     din.read(new Array[Byte](4), 0, 4)
-    return ret
+    ret
   }
 
   def read_netaddr(): NetAddr = {
-    return new NetAddr()
+    new NetAddr()
   }
 
   def read_version(): Version = {
-    return new Version()
+    new Version()
   }
 
   def read_verack(): Verack = {
-    return new Verack()
+    new Verack()
   }
 
   def write_header(header:MessageHeader): Unit = {
