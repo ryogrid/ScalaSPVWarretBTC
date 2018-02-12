@@ -8,65 +8,40 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import scala.collection.JavaConversions._
 
-class MessageHeader {
-  var magic:Int = 0
-  var commandName:Array[Byte] = new Array[Byte](12)
-  var payloadSize:Int = 0
-  var checksum:Array[Byte] = new Array[Byte](4)
-}
+class MessageHeader(
+  var magic: Int = 0,
+  var commandName: Array[Byte] = new Array[Byte](12),
+  var payloadSize: Int = 0,
+  var checksum: Array[Byte] = new Array[Byte](4)
+)
 
-class NetAddr {
-  var services:Long = 0
-  var ip:Array[Byte] = new Array[Byte](16)
-  var port:Short = 0
-}
+class NetAddr(
+  var services: Long = 0,
+  var ip: Array[Byte] = new Array[Byte](16),
+  var port: Short = 0
+)
 
-class Version{
-  var version:Int = 0
-  var services:Long = 0
-  var timestamp:Long = 0
-  var addrRecv:NetAddr = null
-  var addrFrom:NetAddr = null
-  var nonce:Long = 0
-//  var userAgent:StringBuffer = null
-  var userAgent:Array[Char] = null
-  var startHeight:Int = 0
-  var relay:Boolean = false
-  var bytes:Int = 86
-}
+class Version(
+  var version: Int = 0,
+  var services: Long = 0,
+  var timestamp: Long = 0,
+  var addrRecv: NetAddr = null,
+  var addrFrom: NetAddr = null,
+  var nonce: Long = 0,
+  var userAgent: Array[Char] = null,
+  var startHeight:Int = 0,
+  var relay: Boolean = false,
+  var bytes: Int = 86
+)
 
 class Verack{
-  var commandName:String = "verack"
+  var commandName: String = "verack"
 }
 
-class MessageHandler(dummy:String) {
-
-  var din:DataInputStream = null
-  var dout:DataOutputStream = null
-
-  // 補助コンストラクタ
-  def this() {
-    this ("dummy")
-
-    var client:Socket = null
-    try {
-      client = new Socket("testnet-seed.bitcoin.jonasschnelli.ch", 18333)
-    }catch {
-      case e: IOException =>
-        System.out.println(e)
-    }
-
-    try {
-      din = new DataInputStream(client.getInputStream())
-      dout = new DataOutputStream(client.getOutputStream())
-    }catch {
-      case e: IOException =>
-        System.out.println(e)
-    }
-  }
-
-//  def readHex(hex:String):String={
-//  }
+class MessageHandler(dummy:String = "dummy") {
+  val client: Socket = new Socket("testnet-seed.bitcoin.jonasschnelli.ch", 18333)
+  val din: DataInputStream = new DataInputStream(client.getInputStream())
+  var dout: DataOutputStream = new DataOutputStream(client.getOutputStream())
 
   def sha256(payload:Array[Byte]):Array[Byte]={
     var md: MessageDigest = null
@@ -81,13 +56,6 @@ class MessageHandler(dummy:String) {
     var ret:Array[Byte] = md.digest()
 
     return ret
-//    sb = new StringBuilder
-//    for (b <- md.digest) {
-//      val hex: String = String.format("%02x", b)
-//      sb.append(hex)
-//    }
-//
-//    return sb.toString()
   }
 
   def hash256(payload:Array[Byte]):Array[Byte]={
@@ -127,7 +95,7 @@ class MessageHandler(dummy:String) {
     return Integer.parseUnsignedInt(String.valueOf(buf.get())).asInstanceOf[Byte]
   }
 
-  def create_header(msg:Version, data:Array[Byte]):MessageHeader ={
+  def create_header(msg: Version, data: Array[Byte]): MessageHeader = {
     var ret:MessageHeader = new MessageHeader()
 
     ret.magic = intToLittleNosin(0x0709110B)
@@ -148,7 +116,7 @@ class MessageHandler(dummy:String) {
     return ret
   }
 
-  def read_header():MessageHeader={
+  def read_header(): MessageHeader = {
     var ret = new MessageHeader()
 
     din.readInt()
@@ -159,28 +127,26 @@ class MessageHandler(dummy:String) {
     return ret
   }
 
-  def read_netaddr():NetAddr={
+  def read_netaddr(): NetAddr = {
     return new NetAddr()
   }
 
-  def read_version():Version={
+  def read_version(): Version = {
     return new Version()
   }
 
-  def read_verack():Verack={
+  def read_verack(): Verack = {
     return new Verack()
   }
 
-  def write_header(header:MessageHeader){
-//    println(new String(header.commandName))
-
+  def write_header(header:MessageHeader): Unit = {
     dout.writeInt(header.magic)
     dout.write(header.commandName, 0, 12)
     dout.writeInt(header.payloadSize)
     dout.write(header.checksum, 0, 4)
   }
 
-  def write_netaddr(buf:ByteBuffer) {
+  def write_netaddr(buf:ByteBuffer): Unit =  {
     buf.putLong(longToLittleNosin(1))
     for(ip <- Array(0,0,0,0,0,0,0,0,0,0,255,255,127,0,0,1)){
       buf.put(ip.asInstanceOf[Byte])
@@ -188,7 +154,7 @@ class MessageHandler(dummy:String) {
     buf.putShort(8333)
   }
 
-  def write_version(ver:Version){
+  def write_version(ver:Version): Unit = {
     var buf = ByteBuffer.allocate(86)
 
     buf.putInt(intToLittleNosin(70015))
@@ -206,7 +172,7 @@ class MessageHandler(dummy:String) {
     dout.write(ver_arr, 0, ver_arr.length)
   }
 
-  def write_verack(){
+  def write_verack(): Unit = {
     var header:MessageHeader = new MessageHeader()
 
     header.magic = intToLittleNosin(0x0709110B)
@@ -226,7 +192,7 @@ class MessageHandler(dummy:String) {
     write_header(header)
   }
 
-  def withBitcoinConnection(){
+  def withBitcoinConnection(): Unit = {
     var ver:Version = new Version()
     write_version(ver)
     println("send version")
