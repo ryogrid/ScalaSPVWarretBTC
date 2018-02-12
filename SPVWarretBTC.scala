@@ -242,12 +242,11 @@ class MessageHandler(dummy:String) {
       }
       var cmd = new String(cmd_char)
       println("recv " + cmd)
-      cmd match{
-        case "version" =>
-          is_version = true
-          var ver:Version = read_version()
-          write_verack()
-        case "verack" =>
+      if(cmd.equals("version")) {
+        is_version = true
+        var ver: Version = read_version()
+        write_verack()
+      }else if(cmd.equals("verack")){
           is_verack = true
           var vack = read_verack()
       }
@@ -258,7 +257,6 @@ class MessageHandler(dummy:String) {
 
 object Main{
   def main(args: Array[String]) {
-    println("Hello, World")
     var msg_handler = new MessageHandler()
     msg_handler.withBitcoinConnection()
   }
