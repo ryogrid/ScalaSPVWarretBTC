@@ -41,25 +41,17 @@ class MessageHandler(dummy:String = "dummy") {
   val din: DataInputStream = new DataInputStream(client.getInputStream())
   var dout: DataOutputStream = new DataOutputStream(client.getOutputStream())
 
-  def sha256(payload:Array[Byte]):Array[Byte]={
-    var md: MessageDigest = null
-    var sb: StringBuilder = null
-    try {
-      md = MessageDigest.getInstance("SHA-256")
-    } catch {
-      case e: NoSuchAlgorithmException =>
-        e.printStackTrace()
-    }
+  def sha256(payload: Array[Byte]): Array[Byte] = {
+    val md = MessageDigest.getInstance("SHA-256")
     md.update(payload)
     md.digest()
   }
 
-  def hash256(payload:Array[Byte]):Array[Byte]={
+  def hash256(payload: Array[Byte]):Array[Byte] = {
     sha256(sha256(payload))
   }
 
-
-  def longToLittleNosin(value:Long):Long={
+  def longToLittleNosin(value: Long): Long = {
     val buf = ByteBuffer.allocate(8)
     buf.putLong(java.lang.Long.parseUnsignedLong(String.valueOf(value)))
     buf.flip()
@@ -67,7 +59,7 @@ class MessageHandler(dummy:String = "dummy") {
     buf.getLong()
   }
 
-  def intToLittleNosin(value:Int):Int={
+  def intToLittleNosin(value: Int): Int = {
     val buf = ByteBuffer.allocate(4)
     buf.putInt(Integer.parseUnsignedInt(String.valueOf(value)))
     buf.flip()
@@ -75,7 +67,7 @@ class MessageHandler(dummy:String = "dummy") {
     buf.getInt()
   }
 
-  def shortToLittleNosin(value:Short):Short={
+  def shortToLittleNosin(value: Short): Short = {
     val buf = ByteBuffer.allocate(2)
     buf.putShort(Integer.parseUnsignedInt(String.valueOf(value)).asInstanceOf[Short])
     buf.flip()
@@ -83,7 +75,7 @@ class MessageHandler(dummy:String = "dummy") {
     buf.getShort()
   }
 
-  def byteToLittleNosin(value:Byte):Byte={
+  def byteToLittleNosin(value: Byte): Byte = {
     val buf = ByteBuffer.allocate(1)
     buf.put(value)
     buf.flip()
@@ -131,14 +123,14 @@ class MessageHandler(dummy:String = "dummy") {
     new Verack
   }
 
-  def write_header(header:MessageHeader): Unit = {
+  def write_header(header: MessageHeader): Unit = {
     dout.writeInt(header.magic)
     dout.write(header.commandName, 0, 12)
     dout.writeInt(header.payloadSize)
     dout.write(header.checksum, 0, 4)
   }
 
-  def write_netaddr(buf:ByteBuffer): Unit =  {
+  def write_netaddr(buf: ByteBuffer): Unit = {
     buf.putLong(longToLittleNosin(1))
     for(ip <- Array(0,0,0,0,0,0,0,0,0,0,255,255,127,0,0,1)){
       buf.put(ip.asInstanceOf[Byte])
@@ -146,7 +138,7 @@ class MessageHandler(dummy:String = "dummy") {
     buf.putShort(8333)
   }
 
-  def write_version(ver:Version): Unit = {
+  def write_version(ver: Version): Unit = {
     val buf = ByteBuffer.allocate(86)
     buf.putInt(intToLittleNosin(70015))
     buf.putLong(longToLittleNosin(1))
@@ -164,9 +156,8 @@ class MessageHandler(dummy:String = "dummy") {
 
   def write_verack(): Unit = {
     val header = new MessageHeader()
-
     header.magic = intToLittleNosin(0x0709110B)
-    var cmd_name:Array[Char] = "verack".toCharArray()
+    val cmd_name = "verack".toCharArray()
     var cnt = 0
     for (ch <- cmd_name) {
       header.commandName(cnt) = ch.asInstanceOf[Byte]
@@ -182,7 +173,7 @@ class MessageHandler(dummy:String = "dummy") {
   }
 
   def withBitcoinConnection(): Unit = {
-    val ver: Version = new Version()
+    val ver = new Version()
     write_version(ver)
     println("send version")
     var is_version = false
