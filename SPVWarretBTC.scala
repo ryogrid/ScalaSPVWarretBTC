@@ -154,6 +154,7 @@ class MessageHandler(dummy:String) {
     din.readInt()
     var cmd_name:Array[Byte] = new Array[Byte](12)
     din.read(cmd_name, 0, 12)
+    ret.commandName = cmd_name
     din.read(new Array[Byte](4), 0, 4)
     return ret
   }
