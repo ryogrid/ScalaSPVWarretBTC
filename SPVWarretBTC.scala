@@ -10,14 +10,14 @@ import scala.collection.JavaConversions._
 
 class MessageHeader {
   var magic:Int = 0
-  var commandName:Array[Char] = new Array[Char](12)
+  var commandName:Array[Byte] = new Array[Byte](12)
   var payloadSize:Int = 0
-  var checksum:Array[Char] = new Array[Char](4)
+  var checksum:Array[Byte] = new Array[Byte](4)
 }
 
 class NetAddr {
   var services:Long = 0
-  var ip:Array[Char] = new Array[Char](16)
+  var ip:Array[Byte] = new Array[Byte](16)
   var port:Short = 0
 }
 
@@ -68,7 +68,7 @@ class MessageHandler(dummy:String) {
 //  def readHex(hex:String):String={
 //  }
 
-  def sha256(payload:Array[Byte]):String={
+  def sha256(payload:Array[Byte]):Array[Byte]={
     var md: MessageDigest = null
     var sb: StringBuilder = null
     try {
@@ -77,7 +77,8 @@ class MessageHandler(dummy:String) {
       case e: NoSuchAlgorithmException =>
         e.printStackTrace()
     }
-    var ret:Array[Byte] = md.update(payload)
+    md.update(payload)
+    var ret:Array[Byte] = md.digest()
 
     return ret
 //    sb = new StringBuilder
@@ -89,7 +90,7 @@ class MessageHandler(dummy:String) {
 //    return sb.toString()
   }
 
-  def hash256(pyload:Array[Byte]):String={
+  def hash256(payload:Array[Byte]):Array[Byte]={
     return sha256(sha256(payload))
   }
 
@@ -99,7 +100,7 @@ class MessageHandler(dummy:String) {
     buf.putLong(value)
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return Long.parseUnsignedLong(String.valueOf(buf.getLong()))
+    return java.lang.Long.parseUnsignedLong(String.valueOf(buf.getLong()))
   }
 
   def intToLittleNosin(value:Int):Int={
@@ -115,33 +116,34 @@ class MessageHandler(dummy:String) {
     buf.putShort(value)
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return Short.parseUnsignedShort(String.valueOf(buf.getShort()))
+    return Integer.parseUnsignedInt(String.valueOf(buf.getShort())).asInstanceOf[Short]
   }
 
   def byteToLittleNosin(value:Byte):Byte={
     val buf = ByteBuffer.allocate(1)
-    buf.putByte(value)
+    buf.put(value)
     buf.flip()
     buf.order(ByteOrder.LITTLE_ENDIAN)
-    return Byte.parseUnsignedByte(String.valueOf(buf.getByte()))
+    return Integer.parseUnsignedInt(String.valueOf(buf.get())).asInstanceOf[Byte]
   }
 
   def create_header(msg:Version, data:Array[Byte]):MessageHeader ={
-    ret:MessageHeader = new MessageHeader()
+    var ret:MessageHeader = new MessageHeader()
 
     ret.magic = intToLittleNosin(0x0709110B)
-    var cmd_name:Char[] = "version".ToCharArray()
+    var cmd_name:Array[Char] = "version".toCharArray()
     var cnt = 0
     for (ch <- cmd_name) {
-      ret.commandName[cnt++] = ch
+      ret.commandName(cnt) = ch.asInstanceOf[Byte]
+      cnt += 1
     }
-    ret.userAgent = Byte[1]{byteToLittleNosin(0)}
+   // ret.userAgent = new Array[Byte]{byteToLittleNosin(0)}
     ret.payloadSize = intToLittleNosin(msg.bytes)
-    var hash:Array[Byte] = hash256(String.valueOf(data))
-    ret.checksum[0] = byteToLittleNosin(data[0])
-    ret.checksum[1] = byteToLittleNosin(data[1])
-    ret.checksum[2] = byteToLittleNosin(data[2])
-    ret.checksum[3] = byteToLittleNosin(data[3])
+    var hash:Array[Byte] = hash256(data)
+    ret.checksum(0) = byteToLittleNosin(data(0))
+    ret.checksum(1) = byteToLittleNosin(data(1))
+    ret.checksum(2) = byteToLittleNosin(data(2))
+    ret.checksum(3) = byteToLittleNosin(data(3))
 
     return ret
   }
@@ -177,21 +179,22 @@ class MessageHandler(dummy:String) {
 
   def write_version(ver:Version){
 
-    var data:Array[Byte] = new Array[Byte]()
+    var data:Array[Byte] = null
     write_header(create_header(ver, data))
   }
 
-  def write_verack(vrk:Verack){
-
+  def write_verack(){
+    
   }
 
   def withBitcoinConnection(){
-    write_version()
+    var ver:Version = new Version()
+    write_version(ver)
     var is_version = false
     var is_verack = false
     while(is_version == false || is_verack == false){
       var header = read_header()
-      cmd = new String(header.commandName)
+      var cmd = new String(header.commandName)
       cmd match{
         case "version" =>
           is_version = true
