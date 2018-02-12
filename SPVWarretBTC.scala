@@ -239,7 +239,6 @@ class MessageHandler(dummy:String) {
       for(ch <- header.commandName){
         cmd_char(cnt) = ch.asInstanceOf[Char]
         cnt += 1
-        println(String.valueOf(ch.asInstanceOf[Byte]))
       }
       var cmd = new String(cmd_char)
       println("recv " + cmd)
