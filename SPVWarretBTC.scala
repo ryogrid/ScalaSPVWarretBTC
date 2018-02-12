@@ -84,7 +84,7 @@ class MessageHandler(dummy:String = "dummy") {
   }
 
   def createHeader(msg: Version, data: Array[Byte]): MessageHeader = {
-    val header = new MessageHeader()
+    val header = new MessageHeader
     header.magic = intToLittleNosin(0x0709110B)
     val commandName = "version".toCharArray()
     for (i <- 0 until commandName.length) {
@@ -100,7 +100,7 @@ class MessageHandler(dummy:String = "dummy") {
   }
 
   def readHeader(): MessageHeader = {
-    val header = new MessageHeader()
+    val header = new MessageHeader
     din.readInt()
     val commandName = new Array[Byte](12)
     din.read(commandName, 0, 12)
@@ -109,17 +109,11 @@ class MessageHandler(dummy:String = "dummy") {
     header
   }
 
-  def readNetAddr(): NetAddr = {
-    new NetAddr
-  }
+  def readNetAddr(): NetAddr = new NetAddr
 
-  def readVersion(): Version = {
-    new Version
-  }
+  def readVersion(): Version = new Version
 
-  def readVerack(): Verack = {
-    new Verack
-  }
+  def readVerack(): Verack = new Verack
 
   def writeHeader(header: MessageHeader): Unit = {
     dout.writeInt(header.magic)
