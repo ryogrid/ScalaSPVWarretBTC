@@ -34,9 +34,7 @@ class Version(
   var bytes: Int = 86
 )
 
-class Verack{
-  var commandName: String = "verack"
-}
+class Verack(var commandName: String = "verack")
 
 class MessageHandler(dummy:String = "dummy") {
   val client: Socket = new Socket("testnet-seed.bitcoin.jonasschnelli.ch", 18333)
