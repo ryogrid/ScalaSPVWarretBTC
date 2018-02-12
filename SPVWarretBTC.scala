@@ -92,47 +92,43 @@ class MessageHandler(dummy:String = "dummy") {
   }
 
   def create_header(msg: Version, data: Array[Byte]): MessageHeader = {
-    var ret:MessageHeader = new MessageHeader()
-
-    ret.magic = intToLittleNosin(0x0709110B)
-    var cmd_name:Array[Char] = "version".toCharArray()
+    val header = new MessageHeader()
+    header.magic = intToLittleNosin(0x0709110B)
+    val cmd_name = "version".toCharArray()
     var cnt = 0
     for (ch <- cmd_name) {
-      ret.commandName(cnt) = ch.asInstanceOf[Byte]
+      header.commandName(cnt) = ch.asInstanceOf[Byte]
       cnt += 1
     }
-   // ret.userAgent = new Array[Byte]{byteToLittleNosin(0)}
-    ret.payloadSize = intToLittleNosin(msg.bytes)
-    var hash:Array[Byte] = hash256(data)
-    ret.checksum(0) = hash(0)
-    ret.checksum(1) = hash(1)
-    ret.checksum(2) = hash(2)
-    ret.checksum(3) = hash(3)
-
-    ret
+    header.payloadSize = intToLittleNosin(msg.bytes)
+    val hash = hash256(data)
+    header.checksum(0) = hash(0)
+    header.checksum(1) = hash(1)
+    header.checksum(2) = hash(2)
+    header.checksum(3) = hash(3)
+    header
   }
 
   def read_header(): MessageHeader = {
-    var ret = new MessageHeader()
-
+    val header = new MessageHeader()
     din.readInt()
-    var cmd_name:Array[Byte] = new Array[Byte](12)
+    val cmd_name = new Array[Byte](12)
     din.read(cmd_name, 0, 12)
-    ret.commandName = cmd_name
+    header.commandName = cmd_name
     din.read(new Array[Byte](4), 0, 4)
-    ret
+    header
   }
 
   def read_netaddr(): NetAddr = {
-    new NetAddr()
+    new NetAddr
   }
 
   def read_version(): Version = {
-    new Version()
+    new Version
   }
 
   def read_verack(): Verack = {
-    new Verack()
+    new Verack
   }
 
   def write_header(header:MessageHeader): Unit = {
@@ -151,8 +147,7 @@ class MessageHandler(dummy:String = "dummy") {
   }
 
   def write_version(ver:Version): Unit = {
-    var buf = ByteBuffer.allocate(86)
-
+    val buf = ByteBuffer.allocate(86)
     buf.putInt(intToLittleNosin(70015))
     buf.putLong(longToLittleNosin(1))
     buf.putLong(longToLittleNosin((System.currentTimeMillis()/1000).asInstanceOf[Long]))
@@ -162,14 +157,13 @@ class MessageHandler(dummy:String = "dummy") {
     buf.put(byteToLittleNosin(0))
     buf.putInt(intToLittleNosin(0))
     buf.put(byteToLittleNosin(0))
-
-    var ver_arr = buf.array()
+    val ver_arr = buf.array()
     write_header(create_header(ver, ver_arr))
     dout.write(ver_arr, 0, ver_arr.length)
   }
 
   def write_verack(): Unit = {
-    var header:MessageHeader = new MessageHeader()
+    val header = new MessageHeader()
 
     header.magic = intToLittleNosin(0x0709110B)
     var cmd_name:Array[Char] = "verack".toCharArray()
@@ -178,7 +172,6 @@ class MessageHandler(dummy:String = "dummy") {
       header.commandName(cnt) = ch.asInstanceOf[Byte]
       cnt += 1
     }
-    // ret.userAgent = new Array[Byte]{byteToLittleNosin(0)}
     header.payloadSize = intToLittleNosin(0)
     header.checksum(0) = shortToLittleNosin(0x5d).asInstanceOf[Byte]
     header.checksum(1) = shortToLittleNosin(0xf6).asInstanceOf[Byte]
@@ -189,28 +182,28 @@ class MessageHandler(dummy:String = "dummy") {
   }
 
   def withBitcoinConnection(): Unit = {
-    var ver:Version = new Version()
+    val ver: Version = new Version()
     write_version(ver)
     println("send version")
     var is_version = false
     var is_verack = false
     while(is_version == false || is_verack == false){
-      var header = read_header()
-      var cmd_char:Array[Char] = new Array[Char](12)
+      val header = read_header()
+      val cmd_char = new Array[Char](12)
       var cnt:Int = 0
       for(ch <- header.commandName){
         cmd_char(cnt) = ch.asInstanceOf[Char]
         cnt += 1
       }
-      var cmd = new String(cmd_char)
+      val cmd = new String(cmd_char)
       println("recv " + cmd)
-      if(cmd.equals("version")) {
+      if(cmd == "version") {
         is_version = true
-        var ver: Version = read_version()
+        val ver = read_version()
         write_verack()
-      }else if(cmd.equals("verack")){
-          is_verack = true
-          var vack = read_verack()
+      }else if(cmd == "verack"){
+        is_verack = true
+        val vack = read_verack()
       }
     }
   }
@@ -219,7 +212,7 @@ class MessageHandler(dummy:String = "dummy") {
 
 object Main{
   def main(args: Array[String]) {
-    var msg_handler = new MessageHandler()
+    val msg_handler = new MessageHandler()
     msg_handler.withBitcoinConnection()
   }
 }
